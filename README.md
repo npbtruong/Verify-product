@@ -35,7 +35,7 @@ cp .env.example .env
 php artisan key:generate
 
 # Tạo JWT secret key
-php artisan jwt:secret
+php -r "echo base64_encode(random_bytes(32));"
 
 # Chạy migration
 php artisan migrate
