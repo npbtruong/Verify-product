@@ -32,6 +32,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         Route::put('/change-password', [AuthController::class, 'changePassword']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
     });
 
     // Thêm các protected routes khác của bạn tại đây

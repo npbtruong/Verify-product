@@ -173,4 +173,30 @@ class AuthController extends Controller
         // Có thể implement blacklist token nếu cần
         return response()->json(['message' => 'Đăng xuất thành công']);
     }
+
+    /**
+     * Delete user account
+     */
+    public function deleteAccount(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = $request->user();
+
+        // Xác thực mật khẩu trước khi xóa
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Mật khẩu không đúng'], 400);
+        }
+
+        // Xóa user
+        $user->delete();
+
+        return response()->json(['message' => 'Tài khoản đã được xóa thành công'], 200);
+    }
 }

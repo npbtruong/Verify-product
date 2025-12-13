@@ -8,6 +8,7 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 - ✅ User Registration & Login
 - ✅ Profile Management
 - ✅ Change Password
+- ✅ Delete Account
 - ✅ Token Refresh
 - ✅ Protected Routes với Middleware
 
@@ -129,6 +130,17 @@ Content-Type: application/json
 ```http
 POST /api/auth/logout
 Authorization: Bearer {access_token}
+```
+
+#### Delete Account
+```http
+DELETE /api/auth/delete-account
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+    "password": "123456"
+}
 ```
 
 ## 🏗️ Cấu trúc Project
