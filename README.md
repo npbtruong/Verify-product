@@ -10,6 +10,8 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 - ✅ Change Password
 - ✅ Delete Account
 - ✅ Token Refresh
+- ✅ Product Management (Upload, List, Update, Delete)
+- ✅ Image Upload & Storage
 - ✅ Protected Routes với Middleware
 
 ## 📋 Yêu cầu
@@ -40,6 +42,9 @@ php -r "echo base64_encode(random_bytes(32));"
 
 # Chạy migration
 php artisan migrate
+
+# Tạo symbolic link cho storage (để truy cập file uploads)
+php artisan storage:link
 
 # Chạy server
 php artisan serve
@@ -143,23 +148,94 @@ Content-Type: application/json
 }
 ```
 
+### Product Management Routes
+
+#### Upload Product (with Image)
+```http
+POST /api/products
+Authorization: Bearer {access_token}
+Content-Type: multipart/form-data
+
+Form Data:
+- tag_id: ABC123 (required, unique)
+- image: [file] (required, jpeg/jpg/png/gif, max 5MB)
+- describe: Mô tả sản phẩm (optional)
+```
+
+#### Get All Products
+```http
+GET /api/products
+Authorization: Bearer {access_token}
+
+Query Parameters (optional):
+- my_products: true (lấy sản phẩm của user hiện tại)
+- user_id: 1 (lấy sản phẩm của user cụ thể)
+- tag_id: ABC (tìm kiếm theo tag_id)
+```
+
+#### Get Product Detail
+```http
+GET /api/products/{id}
+Authorization: Bearer {access_token}
+```
+
+#### Update Product
+```http
+POST /api/products/{id}
+Authorization: Bearer {access_token}
+Content-Type: multipart/form-data
+
+Form Data (tất cả đều optional):
+- tag_id: ABC456
+- image: [new_file]
+- describe: Mô tả mới
+
+Note: Chỉ owner của sản phẩm mới có quyền update
+```
+
+#### Delete Product
+```http
+DELETE /api/products/{id}
+Authorization: Bearer {access_token}
+
+Note: Chỉ owner của sản phẩm mới có quyền xóa. Ảnh sẽ tự động bị xóa khỏi storage.
+```
+
+#### Get User Statistics
+```http
+GET /api/products/statistics
+Authorization: Bearer {access_token}
+```
+
 ## 🏗️ Cấu trúc Project
 
 ```
 laravel/
 ├── app/
 │   ├── Helpers/
-│   │   └── JWTHelper.php          # JWT utility functions
+│   │   └── JWTHelper.php              # JWT utility functions
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   └── AuthController.php  # Authentication controller
+│   │   │   ├── AuthController.php     # Authentication controller
+│   │   │   └── ProductController.php  # Product management controller
 │   │   └── Middleware/
-│   │       └── JWTAuthMiddleware.php # JWT middleware
+│   │       └── JWTAuthMiddleware.php  # JWT middleware
 │   └── Models/
-│       └── User.php
-├── bootstrap/
-│   └── app.php                     # Middleware registration
+│       ├── User.php
+│       └── Product.php   # Middleware registration
+├── database/
+│   └── migrations/
+│       ├── create_users_table.php
+│       └── create_products_table.php
+├── public/
+│   └── storage/                       # Symbolic link to storage/app/public
 ├── routes/
+│   └── api.php                        # API routes
+├── storage/
+│   └── app/
+│       └── public/
+│           └── products/              # Product images
+└── .env   es/
 │   └── api.php                     # API routes
 └── .env                            # Environment variables
 ```

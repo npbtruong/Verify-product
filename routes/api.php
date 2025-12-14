@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,11 +36,15 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
     });
 
-    // Thêm các protected routes khác của bạn tại đây
-    // Example:
-    // Route::apiResource('posts', PostController::class);
-    // Route::apiResource('products', ProductController::class);
-    // Route::get('/users', [UserController::class, 'index']);
+    // Product routes
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductController::class, 'index']); // Lấy danh sách sản phẩm
+        Route::post('/', [ProductController::class, 'store']); // Upload sản phẩm
+        Route::get('/statistics', [ProductController::class, 'statistics']); // Thống kê
+        Route::get('/{id}', [ProductController::class, 'show']); // Chi tiết sản phẩm
+        Route::post('/{id}', [ProductController::class, 'update']); // Cập nhật sản phẩm (dùng POST vì có upload file)
+        Route::delete('/{id}', [ProductController::class, 'destroy']); // Xóa sản phẩm
+    });
 });
 
 // ========================================
