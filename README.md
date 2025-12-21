@@ -13,6 +13,8 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 - ✅ Product Management (Upload, List, Update, Delete)
 - ✅ Image Upload & Storage
 - ✅ Protected Routes với Middleware
+- ✅ NFC Tag Integration (Public API cho scan NFC)
+- ✅ Owner Management (Đổi chủ sở hữu qua NFC)
 
 ## 📋 Yêu cầu
 
@@ -205,6 +207,82 @@ Note: Chỉ owner của sản phẩm mới có quyền xóa. Ảnh sẽ tự đ�
 ```http
 GET /api/products/statistics
 Authorization: Bearer {access_token}
+```
+
+### NFC Routes (Public - Không cần token)
+
+#### Get Product by Tag ID (NFC Scan)
+```http
+GET /api/nfc/{tag_id}
+
+Example: GET /api/nfc/ABC123
+
+Response:
+{
+    "product": {
+        "tag_id": "ABC123",
+        "image_url": "/storage/products/image.jpg",
+        "describe": "Mô tả sản phẩm",
+        "owner_name": "Nguyễn Văn A",
+        "owner_email": "owner@email.com",
+        "created_at": "2024-12-21T10:00:00.000000Z",
+        "uploaded_by": {
+            "name": "Admin User",
+            "email": "admin@email.com"
+        }
+    }
+}
+```
+
+#### Update Owner Information (NFC Scan)
+```http
+PUT /api/nfc/{tag_id}/owner
+Content-Type: application/json
+
+{
+    "owner_name": "Trần Thị B",
+    "owner_email": "tranb@email.com"
+}
+
+Response:
+{
+    "message": "Cập nhật thông tin chủ sở hữu thành công",
+    "product": {
+        "tag_id": "ABC123",
+        "owner_name": "Trần Thị B",
+        "owner_email": "tranb@email.com"
+    }
+}
+
+Note: Chỉ cho phép cập nhật owner_name và owner_email.
+Không thể sửa: tag_id, image_url, describe, uploaded_by
+```
+
+## 📱 Hệ thống NFC Tag
+
+### Luồng hoạt động:
+
+1. **Admin tạo sản phẩm:**
+   - Upload ảnh áo qua API `POST /api/products`
+   - Nhận về `nfc_url`: `http://yourdomain.com/nfc/ABC123`
+   - Ghi URL này vào chip NFC
+
+2. **Người mua scan NFC:**
+   - Điện thoại mở URL: `http://yourdomain.com/nfc/ABC123`
+   - Website gọi API `GET /api/nfc/ABC123` để hiển thị thông tin áo
+   
+3. **Đổi chủ sở hữu:**
+   - Người đang giữ áo nhập tên và email mới
+   - Gọi API `PUT /api/nfc/ABC123/owner` để cập nhật
+
+### Response khi upload sản phẩm:
+```json
+{
+    "message": "Sản phẩm đã được tạo thành công",
+    "product": {...},
+    "nfc_url": "http://localhost:8000/nfc/ABC123",
+    "nfc_instructions": "Ghi URL này vào thẻ NFC để khách hàng có thể scan"
+}
 ```
 
 ## 🏗️ Cấu trúc Project

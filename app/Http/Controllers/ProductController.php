@@ -81,9 +81,14 @@ class ProductController extends Controller
                 'owner_email' => $request->owner_email,
             ]);
 
+            // Generate NFC URL
+            $nfcUrl = config('app.url') . '/nfc/' . $product->tag_id;
+
             return response()->json([
                 'message' => 'Sản phẩm đã được tạo thành công',
                 'product' => $product->load('user:id,name,email'),
+                'nfc_url' => $nfcUrl,
+                'nfc_instructions' => 'Ghi URL này vào thẻ NFC để khách hàng có thể scan',
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -217,5 +222,77 @@ class ProductController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    // ========================================
+    // PUBLIC NFC ROUTES - Không cần authentication
+    // ========================================
+
+    /**
+     * Get product by tag_id (Public - for NFC scan)
+     * URL: GET /api/nfc/{tag_id}
+     */
+    public function getByTag($tagId)
+    {
+        $product = Product::where('tag_id', $tagId)
+            ->with('user:id,name,email')
+            ->firstOrFail();
+
+        return response()->json([
+            'product' => [
+                'tag_id' => $product->tag_id,
+                'image_url' => $product->image_url,
+                'describe' => $product->describe,
+                'owner_name' => $product->owner_name,
+                'owner_email' => $product->owner_email,
+                'created_at' => $product->created_at,
+                'uploaded_by' => [
+                    'name' => $product->user->name,
+                    'email' => $product->user->email,
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Update owner information (Public - for NFC scan only)
+     * URL: PUT /api/nfc/{tag_id}/owner
+     * 
+     * Chỉ cho phép update owner_name và owner_email
+     * Không cho phép sửa ảnh, tag_id, describe
+     */
+    public function updateOwner(Request $request, $tagId)
+    {
+        $product = Product::where('tag_id', $tagId)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'owner_name' => 'required|string|max:255',
+            'owner_email' => 'required|email|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $product->update([
+                'owner_name' => $request->owner_name,
+                'owner_email' => $request->owner_email,
+            ]);
+
+            return response()->json([
+                'message' => 'Cập nhật thông tin chủ sở hữu thành công',
+                'product' => [
+                    'tag_id' => $product->tag_id,
+                    'owner_name' => $product->owner_name,
+                    'owner_email' => $product->owner_email,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi cập nhật',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
