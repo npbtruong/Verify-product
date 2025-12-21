@@ -56,6 +56,8 @@ class ProductController extends Controller
             'tag_id' => 'required|string|max:255|unique:products,tag_id',
             'image' => 'required|image|mimes:jpeg,jpg,png,gif|max:5120', // max 5MB
             'describe' => 'nullable|string|max:1000',
+            'owner_name' => 'nullable|string|max:255',
+            'owner_email' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -75,6 +77,8 @@ class ProductController extends Controller
                 'image_url' => $imageUrl,
                 'describe' => $request->describe,
                 'uploaded_by' => $request->user()->id,
+                'owner_name' => $request->owner_name,
+                'owner_email' => $request->owner_email,
             ]);
 
             return response()->json([
@@ -105,6 +109,8 @@ class ProductController extends Controller
             'tag_id' => 'sometimes|string|max:255|unique:products,tag_id,' . $id,
             'image' => 'sometimes|image|mimes:jpeg,jpg,png,gif|max:5120',
             'describe' => 'nullable|string|max:1000',
+            'owner_name' => 'nullable|string|max:255',
+            'owner_email' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -122,6 +128,15 @@ class ProductController extends Controller
             // Update describe if provided
             if ($request->has('describe')) {
                 $updateData['describe'] = $request->describe;
+            }
+
+            // Update owner info if provided
+            if ($request->has('owner_name')) {
+                $updateData['owner_name'] = $request->owner_name;
+            }
+
+            if ($request->has('owner_email')) {
+                $updateData['owner_email'] = $request->owner_email;
             }
 
             // Update image if provided

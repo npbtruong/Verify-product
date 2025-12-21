@@ -15,6 +15,8 @@ class Product extends Model
         'image_url',
         'describe',
         'uploaded_by',
+        'owner_name',
+        'owner_email',
     ];
 
     /**
