@@ -159,9 +159,12 @@ Authorization: Bearer {access_token}
 Content-Type: multipart/form-data
 
 Form Data:
-- tag_id: ABC123 (required, unique)
 - image: [file] (required, jpeg/jpg/png/gif, max 5MB)
 - describe: Mô tả sản phẩm (optional)
+- owner_name: Tên chủ sở hữu (optional)
+- owner_email: Email chủ sở hữu (optional)
+
+Note: tag_id sẽ được tự động generate dạng NFC-XXXXXX (unique, không thể đoán được)
 ```
 
 #### Get All Products
@@ -188,11 +191,14 @@ Authorization: Bearer {access_token}
 Content-Type: multipart/form-data
 
 Form Data (tất cả đều optional):
-- tag_id: ABC456
 - image: [new_file]
 - describe: Mô tả mới
+- owner_name: Tên chủ sở hữu mới
+- owner_email: Email chủ sở hữu mới
 
-Note: Chỉ owner của sản phẩm mới có quyền update
+Note: 
+- Chỉ owner của sản phẩm mới có quyền update
+- tag_id KHÔNG THỂ sửa (đã cố định khi tạo)
 ```
 
 #### Delete Product
@@ -279,11 +285,21 @@ Không thể sửa: tag_id, image_url, describe, uploaded_by
 ```json
 {
     "message": "Sản phẩm đã được tạo thành công",
-    "product": {...},
-    "nfc_url": "http://localhost:8000/nfc/ABC123",
+    "product": {
+        "id": 1,
+        "tag_id": "NFC-A7B2C9",
+        "image_url": "/storage/products/image.jpg",
+        ...
+    },
+    "nfc_url": "http://localhost:8000/nfc/NFC-A7B2C9",
     "nfc_instructions": "Ghi URL này vào thẻ NFC để khách hàng có thể scan"
 }
 ```
+
+**Lưu ý:** 
+- `tag_id` được tự động generate dạng `NFC-XXXXXX` (6 ký tự ngẫu nhiên)
+- Unique và không thể đoán được → Bảo mật cao hơn
+- Không thể sửa sau khi tạo
 
 ## 🏗️ Cấu trúc Project
 

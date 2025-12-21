@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -18,6 +19,20 @@ class Product extends Model
         'owner_name',
         'owner_email',
     ];
+
+    /**
+     * Generate unique tag ID
+     * Format: NFC-XXXXXX (NFC + 6 ký tự ngẫu nhiên uppercase)
+     */
+    public static function generateUniqueTagId(): string
+    {
+        do {
+            // Generate random tag: NFC-AB12CD (prefix + 6 ký tự alphanumeric)
+            $tagId = 'NFC-' . strtoupper(Str::random(6));
+        } while (self::where('tag_id', $tagId)->exists());
+
+        return $tagId;
+    }
 
     /**
      * Get the user that uploaded the product.

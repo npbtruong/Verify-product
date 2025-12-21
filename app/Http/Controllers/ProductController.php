@@ -53,7 +53,6 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'tag_id' => 'required|string|max:255|unique:products,tag_id',
             'image' => 'required|image|mimes:jpeg,jpg,png,gif|max:5120', // max 5MB
             'describe' => 'nullable|string|max:1000',
             'owner_name' => 'nullable|string|max:255',
@@ -65,6 +64,9 @@ class ProductController extends Controller
         }
 
         try {
+            // Generate unique tag_id automatically
+            $tagId = Product::generateUniqueTagId();
+
             // Upload image
             $image = $request->file('image');
             $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
@@ -73,7 +75,7 @@ class ProductController extends Controller
 
             // Create product
             $product = Product::create([
-                'tag_id' => $request->tag_id,
+                'tag_id' => $tagId,
                 'image_url' => $imageUrl,
                 'describe' => $request->describe,
                 'uploaded_by' => $request->user()->id,
@@ -111,7 +113,6 @@ class ProductController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'tag_id' => 'sometimes|string|max:255|unique:products,tag_id,' . $id,
             'image' => 'sometimes|image|mimes:jpeg,jpg,png,gif|max:5120',
             'describe' => 'nullable|string|max:1000',
             'owner_name' => 'nullable|string|max:255',
@@ -125,10 +126,7 @@ class ProductController extends Controller
         try {
             $updateData = [];
 
-            // Update tag_id if provided
-            if ($request->has('tag_id')) {
-                $updateData['tag_id'] = $request->tag_id;
-            }
+            // Note: tag_id KHÔNG THỂ sửa - đã được tự động generate và phải cố định
 
             // Update describe if provided
             if ($request->has('describe')) {
