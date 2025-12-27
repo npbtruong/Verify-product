@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PartnerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +45,18 @@ Route::middleware(['jwt.auth'])->group(function () {
         // Tạo user mới (Admin và Partner)
         Route::post('/create-user', [AuthController::class, 'createUser'])
             ->middleware('role:admin,partner');
+    });
+
+    // Partner routes (Admin và Partner có quyền tạo/sửa, chỉ Admin mới xóa được)
+    Route::prefix('partners')->group(function () {
+        Route::get('/', [PartnerController::class, 'index']); // Lấy danh sách partners
+        Route::get('/{id}', [PartnerController::class, 'show']); // Chi tiết partner
+        Route::post('/', [PartnerController::class, 'store'])
+            ->middleware('role:admin,partner'); // Tạo partner
+        Route::put('/{id}', [PartnerController::class, 'update'])
+            ->middleware('role:admin,partner'); // Cập nhật partner
+        Route::delete('/{id}', [PartnerController::class, 'destroy'])
+            ->middleware('role:admin'); // Chỉ admin mới xóa được
     });
 
     // Product routes

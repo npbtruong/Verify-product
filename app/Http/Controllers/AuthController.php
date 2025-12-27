@@ -130,17 +130,44 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'partner_id' => 'nullable|exists:partners,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user->update($request->only(['name', 'email']));
+        // User role "user" KHÔNG được đổi partner_id
+        if ($user->role === 'user' && $request->has('partner_id')) {
+            return response()->json([
+                'message' => 'Bạn không có quyền thay đổi Partner'
+            ], 403);
+        }
+
+        // Chỉ cho phép update những field được phép
+        $allowedFields = ['name', 'email'];
+        
+        // Admin và Partner có thể đổi partner_id của chính họ
+        if (in_array($user->role, ['admin', 'partner']) && $request->has('partner_id')) {
+            $allowedFields[] = 'partner_id';
+            
+            // Nếu admin/partner đổi partner_id, cập nhật tất cả user do họ tạo
+            $oldPartnerId = $user->partner_id;
+            $newPartnerId = $request->partner_id;
+            
+            if ($oldPartnerId !== $newPartnerId) {
+                // Cập nhật partner_id cho tất cả user được tạo bởi user này
+                User::where('created_by', $user->id)
+                    ->where('role', 'user')
+                    ->update(['partner_id' => $newPartnerId]);
+            }
+        }
+
+        $user->update($request->only($allowedFields));
 
         return response()->json([
             'message' => 'Cập nhật thông tin thành công',
-            'user' => $user,
+            'user' => $user->load('partner'),
         ]);
     }
 
@@ -219,6 +246,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:user,partner,admin',
+            'partner_id' => 'nullable|exists:partners,id', // Cho phép set partner_id khi tạo
         ]);
 
         if ($validator->fails()) {
@@ -251,16 +279,31 @@ class AuthController extends Controller
             }
         }
 
+        // Logic gán partner_id:
+        // - USER: TỰ ĐỘNG lấy từ người tạo (KHÔNG cho phép manual set)
+        // - PARTNER/ADMIN: Cho phép manual set qua request, không thì null
+        $partnerIdToAssign = null;
+        
+        if ($requestedRole === 'user') {
+            // User TỰ ĐỘNG kế thừa partner_id từ người tạo
+            $partnerIdToAssign = $currentUser->partner_id;
+        } else {
+            // Partner/Admin có thể manual set partner_id
+            $partnerIdToAssign = $request->partner_id;
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $requestedRole,
+            'partner_id' => $partnerIdToAssign,
+            'created_by' => $currentUser->id,
         ]);
 
         return response()->json([
             'message' => 'Tạo tài khoản thành công',
-            'user' => $user,
+            'user' => $user->load('partner', 'creator'),
         ], 201);
     }
 }

@@ -5,18 +5,12 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 ## 🚀 Tính năng
 
 - ✅ JWT Authentication (Access Token + Refresh Token)
-- ✅ **Role-based Access Control (Admin, Partner, User)**
-- ✅ User Registration & Login
-- ✅ Profile Management
-- ✅ Change Password
-- ✅ Delete Account
-- ✅ Token Refresh
-- ✅ Product Management (Upload, List, Update, Delete)
+- ✅ Role-based Access Control (Admin, Partner, User)
+- ✅ Partner Management System với auto-inheritance
+- ✅ User-Partner Relationship & Created-By Tracking
+- ✅ Product Management với NFC Tag Integration
 - ✅ Image Upload & Storage
-- ✅ Protected Routes với Middleware
-- ✅ NFC Tag Integration (Public API cho scan NFC)
-- ✅ Owner Management (Đổi chủ sở hữu qua NFC)
-- ✅ **User Creation by Admin/Partner with Role Restrictions**
+- ✅ Owner Transfer System (NFC)
 
 ## 📋 Yêu cầu
 
@@ -151,6 +145,9 @@ Content-Type: application/json
 {
     "name": "Updated Name",
     "email": "newemail@example.com"
+    // User role "user" KHÔNG được đổi partner_id
+    // Admin/Partner có thể đổi partner_id của chính họ
+    // Khi Admin/Partner đổi partner_id → tất cả user do họ tạo cũng đổi theo
 }
 ```
 
@@ -195,274 +192,179 @@ Content-Type: application/json
     "email": "newuser@example.com",
     "password": "password123",
     "password_confirmation": "password123",
-    "role": "user"  // Có thể là: "user", "partner", "admin"
+    "role": "user"  // "user", "partner", "admin"
 }
 
-Response Success:
-{
-    "message": "Tạo tài khoản thành công",
-    "user": {
-        "id": 5,
-        "name": "New User",
-        "email": "newuser@example.com",
-        "role": "user"
-    }
-}
-
-Response Error (Không đủ quyền):
-{
-    "message": "Bạn không có quyền tạo tài khoản Partner"
-}
+Logic partner_id:
+- Tạo USER: TỰ ĐỘNG kế thừa partner_id từ người tạo
+- Tạo PARTNER/ADMIN: Cho phép manual set partner_id, hoặc null
 
 Phân quyền:
-- Admin: Có thể tạo user với role: "user", "partner", "admin"
-- Partner: Chỉ có thể tạo user với role: "user"
-- User: Không thể sử dụng endpoint này (403 Forbidden)
+- Admin: Tạo được user, partner, admin
+- Partner: Chỉ tạo được user
+- User: Không có quyền
+```
+
+### Partner Management Routes 🆕
+
+```http
+# Danh sách partners
+GET /api/partners
+Authorization: Bearer {access_token}
+
+# Chi tiết partner
+GET /api/partners/{id}
+Authorization: Bearer {access_token}
+
+# Tạo partner (Admin/Partner)
+POST /api/partners
+Authorization: Bearer {access_token}
+{
+    "name": "Partner Name",
+    "domain": "domain.com",  // required, unique
+    "brand": "Brand Name"     // optional
+}
+
+# Cập nhật partner (Admin/Partner)
+PUT /api/partners/{id}
+Authorization: Bearer {access_token}
+
+# Xóa partner (Admin only)
+DELETE /api/partners/{id}
+Authorization: Bearer {access_token}
 ```
 
 ### Product Management Routes
 
-#### Upload Product (with Image)
 ```http
+# Upload sản phẩm
 POST /api/products
 Authorization: Bearer {access_token}
 Content-Type: multipart/form-data
+Form: image, describe, owner_name, owner_email
 
-Form Data:
-- image: [file] (required, jpeg/jpg/png/gif, max 5MB)
-- describe: Mô tả sản phẩm (optional)
-- owner_name: Tên chủ sở hữu (optional)
-- owner_email: Email chủ sở hữu (optional)
-
-Note: tag_id sẽ được tự động generate dạng NFC-XXXXXX (unique, không thể đoán được)
-```
-
-#### Get All Products
-```http
-GET /api/products
+# Danh sách sản phẩm
+GET /api/products?my_products=true&user_id=1&tag_id=ABC
 Authorization: Bearer {access_token}
 
-Query Parameters (optional):
-- my_products: true (lấy sản phẩm của user hiện tại)
-- user_id: 1 (lấy sản phẩm của user cụ thể)
-- tag_id: ABC (tìm kiếm theo tag_id)
-```
-
-#### Get Product Detail
-```http
+# Chi tiết sản phẩm
 GET /api/products/{id}
 Authorization: Bearer {access_token}
-```
 
-#### Update Product
-```http
+# Cập nhật sản phẩm
 POST /api/products/{id}
 Authorization: Bearer {access_token}
 Content-Type: multipart/form-data
 
-Form Data (tất cả đều optional):
-- image: [new_file]
-- describe: Mô tả mới
-- owner_name: Tên chủ sở hữu mới
-- owner_email: Email chủ sở hữu mới
-
-Note: 
-- Chỉ owner của sản phẩm mới có quyền update
-- tag_id KHÔNG THỂ sửa (đã cố định khi tạo)
-```
-
-#### Delete Product
-```http
+# Xóa sản phẩm
 DELETE /api/products/{id}
 Authorization: Bearer {access_token}
 
-Note: Chỉ owner của sản phẩm mới có quyền xóa. Ảnh sẽ tự động bị xóa khỏi storage.
-```
-
-#### Get User Statistics
-```http
+# Thống kê
 GET /api/products/statistics
 Authorization: Bearer {access_token}
 ```
 
 ### NFC Routes (Public - Không cần token)
 
-#### Get Product by Tag ID (NFC Scan)
 ```http
+# Xem thông tin sản phẩm qua NFC scan
 GET /api/nfc/{tag_id}
 
-Example: GET /api/nfc/ABC123
-
-Response:
-{
-    "product": {
-        "tag_id": "ABC123",
-        "image_url": "/storage/products/image.jpg",
-        "describe": "Mô tả sản phẩm",
-        "owner_name": "Nguyễn Văn A",
-        "owner_email": "owner@email.com",
-        "created_at": "2024-12-21T10:00:00.000000Z",
-        "uploaded_by": {
-            "name": "Admin User",
-            "email": "admin@email.com"
-        }
-    }
-}
-```
-
-#### Update Owner Information (NFC Scan)
-```http
+# Đổi chủ sở hữu
 PUT /api/nfc/{tag_id}/owner
 Content-Type: application/json
-
 {
-    "owner_name": "Trần Thị B",
-    "owner_email": "tranb@email.com"
+    "owner_name": "Tên mới",
+    "owner_email": "email@example.com"
 }
-
-Response:
-{
-    "message": "Cập nhật thông tin chủ sở hữu thành công",
-    "product": {
-        "tag_id": "ABC123",
-        "owner_name": "Trần Thị B",
-        "owner_email": "tranb@email.com"
-    }
-}
-
-Note: Chỉ cho phép cập nhật owner_name và owner_email.
-Không thể sửa: tag_id, image_url, describe, uploaded_by
 ```
 
 ## 📱 Hệ thống NFC Tag
 
-### Luồng hoạt động:
+1. **Upload sản phẩm** → Nhận `nfc_url` (VD: `http://domain.com/nfc/NFC-A7B2C9`)
+2. **Ghi URL vào chip NFC** → Khách scan để xem thông tin
+3. **Đổi chủ sở hữu** → PUT `/api/nfc/{tag_id}/owner`
 
-1. **Admin tạo sản phẩm:**
-   - Upload ảnh áo qua API `POST /api/products`
-   - Nhận về `nfc_url`: `http://yourdomain.com/nfc/ABC123`
-   - Ghi URL này vào chip NFC
-
-2. **Người mua scan NFC:**
-   - Điện thoại mở URL: `http://yourdomain.com/nfc/ABC123`
-   - Website gọi API `GET /api/nfc/ABC123` để hiển thị thông tin áo
-   
-3. **Đổi chủ sở hữu:**
-   - Người đang giữ áo nhập tên và email mới
-   - Gọi API `PUT /api/nfc/ABC123/owner` để cập nhật
-
-### Response khi upload sản phẩm:
-```json
-{
-    "message": "Sản phẩm đã được tạo thành công",
-    "product": {
-        "id": 1,
-        "tag_id": "NFC-A7B2C9",
-        "image_url": "/storage/products/image.jpg",
-        ...
-    },
-    "nfc_url": "http://localhost:8000/nfc/NFC-A7B2C9",
-    "nfc_instructions": "Ghi URL này vào thẻ NFC để khách hàng có thể scan"
-}
-```
-
-**Lưu ý:** 
-- `tag_id` được tự động generate dạng `NFC-XXXXXX` (6 ký tự ngẫu nhiên)
-- Unique và không thể đoán được → Bảo mật cao hơn
-- Không thể sửa sau khi tạo
+**Tag ID:** Auto-generate dạng `NFC-XXXXXX`, unique, không thể sửa sau khi tạo.
 
 ## 🏗️ Cấu trúc Project
 
 ```
-laravel/
-├── app/
-│   ├── Helpers/
-│   │   └── JWTHelper.php              # JWT utility functions
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── AuthController.php     # Authentication & User Management
-│   │   │   └── ProductController.php  # Product management controller
-│   │   └── Middleware/
-│   │       ├── JWTAuthMiddleware.php  # JWT authentication
-│   │       └── CheckRole.php          # Role-based access control
-│   └── Models/
-│       ├── User.php                   # User model với role methods
-│       └── Product.php
-├── bootstrap/
-│   └── app.php                        # Middleware registration
-├── database/
-│   └── migrations/
-│       ├── create_users_table.php
-│       ├── create_products_table.php
-│       └── add_role_to_users_table.php # Migration thêm role
-├── public/
-│   └── storage/                       # Symbolic link to storage/app/public
-├── routes/
-│   └── api.php                        # API routes với role middleware
-├── storage/
-│   └── app/
-│       └── public/
-│           └── products/              # Product images
-└── .env                               # Environment variables
+app/
+├── Helpers/JWTHelper.php
+├── Http/
+│   ├── Controllers/
+│   │   ├── AuthController.php      # Auth & User Management
+│   │   ├── PartnerController.php   # Partner Management
+│   │   └── ProductController.php   # Product & NFC
+│   └── Middleware/
+│       ├── JWTAuthMiddleware.php
+│       └── CheckRole.php
+└── Models/
+    ├── User.php                    # với created_by tracking
+    ├── Partner.php
+    └── Product.php
+database/migrations/
+├── create_users_table.php
+├── create_partners_table.php       # name, domain, brand
+├── create_products_table.php
+├── add_role_to_users_table.php
+├── add_partner_id_to_users_table.php
+└── add_created_by_to_users_table.php  # Tracking người tạo
 ```
 
 ## 🔒 Security
 
-- Passwords được hash với bcrypt
-- JWT tokens có thời gian hết hạn
-- Refresh tokens riêng biệt với access tokens
-- Middleware bảo vệ protected routes
-- **Role-based Access Control (RBAC) với 3 levels: Admin, Partner, User**
-- **Middleware kiểm tra quyền truy cập theo role**
-- **Phân quyền tạo user theo role hierarchy**
+- Bcrypt password hashing
+- JWT tokens với expiration
+- Role-based Access Control (RBAC)
+- Partner inheritance & cascade updates
+- Created-by tracking system
+- Middleware protection cho protected routes
 
-## 🎯 Use Cases
+## 🎯 Use Cases & Logic
 
-### 1. Đăng ký User thường (Public)
-```bash
-# Bất kỳ ai cũng có thể đăng ký user thường
-POST /api/auth/register
-→ Tạo user với role: "user"
+### 1. Partner Inheritance System
+
+**Khi tạo USER:**
+- `partner_id` TỰ ĐỘNG kế thừa từ người tạo
+- `created_by` lưu ID người tạo
+- KHÔNG cho phép manual set partner_id
+
+**Khi tạo PARTNER/ADMIN:**
+- Cho phép manual set `partner_id` qua request
+- Nếu không set → `partner_id = null`
+
+### 2. Partner Update Cascade
+
+**Khi Admin/Partner đổi partner_id:**
+```
+Partner A (partner_id = 1) → Đổi thành partner_id = 2
+→ TẤT CẢ user (role="user") do Partner A tạo cũng đổi partner_id = 2
 ```
 
-### 2. Admin tạo Partner
-```bash
-# Chỉ Admin mới có quyền tạo Partner
-POST /api/auth/create-user
-Authorization: Bearer {admin_token}
-{
-  "role": "partner",
-  ...
-}
-→ Success: Tạo partner mới
-```
+### 3. Quyền hạn theo Role
 
-### 3. Partner tạo User
-```bash
-# Partner có thể tạo User thường
-POST /api/auth/create-user
-Authorization: Bearer {partner_token}
-{
-  "role": "user",
-  ...
-}
-→ Success: Tạo user mới
+| Action | Admin | Partner | User |
+|--------|-------|---------|------|
+| Tạo Admin | ✅ | ❌ | ❌ |
+| Tạo Partner | ✅ | ❌ | ❌ |
+| Tạo User | ✅ | ✅ | ❌ |
+| Đổi partner_id (của chính mình) | ✅ | ✅ | ❌ |
+| Xóa Partner | ✅ | ❌ | ❌ |
 
-# Partner KHÔNG THỂ tạo Partner
-{
-  "role": "partner",
-  ...
-}
-→ Error 403: "Bạn không có quyền tạo tài khoản Partner"
-```
+### 4. Data Structure
 
-### 4. User thường không thể tạo user
-```bash
-# User thường không có quyền truy cập endpoint này
-POST /api/auth/create-user
-Authorization: Bearer {user_token}
-→ Error 403: "Bạn không có quyền truy cập chức năng này"
-```
+**Partners:** `id, name, domain (unique), brand`
+
+**Users:** `id, name, email, password, role, partner_id, created_by`
+
+**Relationships:**
+- `User belongsTo Partner`
+- `User belongsTo User (creator)`
+- `Partner hasMany Users`
+- `User hasMany Users (created users)`
 
 ## 📝 License
 
