@@ -40,6 +40,10 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::put('/change-password', [AuthController::class, 'changePassword']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
+        
+        // Tạo user mới (Admin và Partner)
+        Route::post('/create-user', [AuthController::class, 'createUser'])
+            ->middleware('role:admin,partner');
     });
 
     // Product routes

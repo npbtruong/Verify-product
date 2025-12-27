@@ -15,6 +15,9 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        //tạm chưa sai api này
+        return response()->json(['message' => 'Đăng ký tạm thời không khả dụng'], 503);
+        
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -25,10 +28,12 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Đăng ký công khai chỉ tạo user với role 'user'
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'user', // Mặc định là user
         ]);
 
         $token = JWTHelper::generateToken($user->id);
@@ -198,5 +203,64 @@ class AuthController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'Tài khoản đã được xóa thành công'], 200);
+    }
+
+    /**
+     * Create new user (Admin/Partner only)
+     * Admin có thể tạo user và partner
+     * Partner chỉ có thể tạo user
+     */
+    public function createUser(Request $request)
+    {
+        $currentUser = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:user,partner,admin',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $requestedRole = $request->role;
+
+        // Kiểm tra quyền tạo user
+        if ($requestedRole === 'admin') {
+            // Chỉ admin mới có thể tạo admin
+            if (!$currentUser->isAdmin()) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền tạo tài khoản Admin'
+                ], 403);
+            }
+        } elseif ($requestedRole === 'partner') {
+            // Chỉ admin mới có thể tạo partner
+            if (!$currentUser->canCreatePartner()) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền tạo tài khoản Partner'
+                ], 403);
+            }
+        } elseif ($requestedRole === 'user') {
+            // Admin và Partner có thể tạo user
+            if (!$currentUser->canCreateUser()) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền tạo tài khoản User'
+                ], 403);
+            }
+        }
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $requestedRole,
+        ]);
+
+        return response()->json([
+            'message' => 'Tạo tài khoản thành công',
+            'user' => $user,
+        ], 201);
     }
 }

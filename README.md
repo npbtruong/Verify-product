@@ -5,6 +5,7 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 ## 🚀 Tính năng
 
 - ✅ JWT Authentication (Access Token + Refresh Token)
+- ✅ **Role-based Access Control (Admin, Partner, User)**
 - ✅ User Registration & Login
 - ✅ Profile Management
 - ✅ Change Password
@@ -15,6 +16,7 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 - ✅ Protected Routes với Middleware
 - ✅ NFC Tag Integration (Public API cho scan NFC)
 - ✅ Owner Management (Đổi chủ sở hữu qua NFC)
+- ✅ **User Creation by Admin/Partner with Role Restrictions**
 
 ## 📋 Yêu cầu
 
@@ -64,6 +66,22 @@ JWT_REFRESH_TTL=604800
 
 ## 📚 API Endpoints
 
+### 🔐 Hệ thống Phân quyền (Role-based Access Control)
+
+Ứng dụng sử dụng 3 loại role:
+
+| Role | Quyền tạo User | Quyền tạo Partner | Quyền tạo Admin |
+|------|---------------|-------------------|-----------------|
+| **Admin** | ✅ Có | ✅ Có | ✅ Có |
+| **Partner** | ✅ Có | ❌ Không | ❌ Không |
+| **User** | ❌ Không | ❌ Không | ❌ Không |
+
+**Lưu ý:**
+- Đăng ký công khai (`POST /api/auth/register`) chỉ tạo user với role `user`
+- Admin và Partner phải sử dụng endpoint `POST /api/auth/create-user` để tạo user mới
+
+---
+
 ### Public Routes (Không cần token)
 
 #### Register
@@ -77,6 +95,22 @@ Content-Type: application/json
     "password": "123456",
     "password_confirmation": "123456"
 }
+
+Response:
+{
+    "message": "Đăng ký thành công",
+    "user": {
+        "id": 1,
+        "name": "Test User",
+        "email": "test@example.com",
+        "role": "user"  // Luôn là 'user' khi đăng ký công khai
+    },
+    "access_token": "...",
+    "refresh_token": "...",
+    "token_type": "Bearer"
+}
+
+Note: Đăng ký công khai chỉ tạo user với role 'user'
 ```
 
 #### Login
@@ -148,6 +182,42 @@ Content-Type: application/json
 {
     "password": "123456"
 }
+```
+
+#### Create User (Admin/Partner Only) 🆕
+```http
+POST /api/auth/create-user
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+    "name": "New User",
+    "email": "newuser@example.com",
+    "password": "password123",
+    "password_confirmation": "password123",
+    "role": "user"  // Có thể là: "user", "partner", "admin"
+}
+
+Response Success:
+{
+    "message": "Tạo tài khoản thành công",
+    "user": {
+        "id": 5,
+        "name": "New User",
+        "email": "newuser@example.com",
+        "role": "user"
+    }
+}
+
+Response Error (Không đủ quyền):
+{
+    "message": "Bạn không có quyền tạo tài khoản Partner"
+}
+
+Phân quyền:
+- Admin: Có thể tạo user với role: "user", "partner", "admin"
+- Partner: Chỉ có thể tạo user với role: "user"
+- User: Không thể sử dụng endpoint này (403 Forbidden)
 ```
 
 ### Product Management Routes
@@ -310,28 +380,30 @@ laravel/
 │   │   └── JWTHelper.php              # JWT utility functions
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── AuthController.php     # Authentication controller
+│   │   │   ├── AuthController.php     # Authentication & User Management
 │   │   │   └── ProductController.php  # Product management controller
 │   │   └── Middleware/
-│   │       └── JWTAuthMiddleware.php  # JWT middleware
+│   │       ├── JWTAuthMiddleware.php  # JWT authentication
+│   │       └── CheckRole.php          # Role-based access control
 │   └── Models/
-│       ├── User.php
-│       └── Product.php   # Middleware registration
+│       ├── User.php                   # User model với role methods
+│       └── Product.php
+├── bootstrap/
+│   └── app.php                        # Middleware registration
 ├── database/
 │   └── migrations/
 │       ├── create_users_table.php
-│       └── create_products_table.php
+│       ├── create_products_table.php
+│       └── add_role_to_users_table.php # Migration thêm role
 ├── public/
 │   └── storage/                       # Symbolic link to storage/app/public
 ├── routes/
-│   └── api.php                        # API routes
+│   └── api.php                        # API routes với role middleware
 ├── storage/
 │   └── app/
 │       └── public/
 │           └── products/              # Product images
-└── .env   es/
-│   └── api.php                     # API routes
-└── .env                            # Environment variables
+└── .env                               # Environment variables
 ```
 
 ## 🔒 Security
@@ -340,6 +412,57 @@ laravel/
 - JWT tokens có thời gian hết hạn
 - Refresh tokens riêng biệt với access tokens
 - Middleware bảo vệ protected routes
+- **Role-based Access Control (RBAC) với 3 levels: Admin, Partner, User**
+- **Middleware kiểm tra quyền truy cập theo role**
+- **Phân quyền tạo user theo role hierarchy**
+
+## 🎯 Use Cases
+
+### 1. Đăng ký User thường (Public)
+```bash
+# Bất kỳ ai cũng có thể đăng ký user thường
+POST /api/auth/register
+→ Tạo user với role: "user"
+```
+
+### 2. Admin tạo Partner
+```bash
+# Chỉ Admin mới có quyền tạo Partner
+POST /api/auth/create-user
+Authorization: Bearer {admin_token}
+{
+  "role": "partner",
+  ...
+}
+→ Success: Tạo partner mới
+```
+
+### 3. Partner tạo User
+```bash
+# Partner có thể tạo User thường
+POST /api/auth/create-user
+Authorization: Bearer {partner_token}
+{
+  "role": "user",
+  ...
+}
+→ Success: Tạo user mới
+
+# Partner KHÔNG THỂ tạo Partner
+{
+  "role": "partner",
+  ...
+}
+→ Error 403: "Bạn không có quyền tạo tài khoản Partner"
+```
+
+### 4. User thường không thể tạo user
+```bash
+# User thường không có quyền truy cập endpoint này
+POST /api/auth/create-user
+Authorization: Bearer {user_token}
+→ Error 403: "Bạn không có quyền truy cập chức năng này"
+```
 
 ## 📝 License
 

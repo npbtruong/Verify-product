@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -44,5 +45,45 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user is partner
+     */
+    public function isPartner(): bool
+    {
+        return $this->role === 'partner';
+    }
+
+    /**
+     * Check if user is regular user
+     */
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    /**
+     * Check if user can create users
+     */
+    public function canCreateUser(): bool
+    {
+        return in_array($this->role, ['admin', 'partner']);
+    }
+
+    /**
+     * Check if user can create partners
+     */
+    public function canCreatePartner(): bool
+    {
+        return $this->role === 'admin';
     }
 }
