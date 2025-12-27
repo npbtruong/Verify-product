@@ -17,7 +17,7 @@ class AuthController extends Controller
     {
         //tạm chưa sai api này
         return response()->json(['message' => 'Đăng ký tạm thời không khả dụng'], 503);
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -130,13 +130,14 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'domain' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user->update($request->only(['name', 'email']));
+        $user->update($request->only(['name', 'email', 'domain']));
 
         return response()->json([
             'message' => 'Cập nhật thông tin thành công',
@@ -219,6 +220,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:user,partner,admin',
+            'domain' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -256,6 +258,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $requestedRole,
+            'domain' => $request->domain,
         ]);
 
         return response()->json([
