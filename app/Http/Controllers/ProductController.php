@@ -84,7 +84,7 @@ class ProductController extends Controller
             ]);
 
             // Generate NFC URL
-            $nfcUrl = config('app.url') . '/nfc/' . $product->tag_id;
+            $nfcUrl = config('app.url') . '/api/nfc/' . $product->tag_id;
 
             return response()->json([
                 'message' => 'Sản phẩm đã được tạo thành công',
@@ -233,8 +233,23 @@ class ProductController extends Controller
     public function getByTag($tagId)
     {
         $product = Product::where('tag_id', $tagId)
-            ->with('user:id,name,email')
+            ->with('user:id,name,email,partner_id', 'user.partner:id,name,domain,brand')
             ->firstOrFail();
+
+        $uploadedBy = [
+            'name' => $product->user->name,
+            'email' => $product->user->email,
+        ];
+
+        // Thêm thông tin partner nếu có
+        if ($product->user->partner) {
+            $uploadedBy['partner'] = [
+                'id' => $product->user->partner->id,
+                'name' => $product->user->partner->name,
+                'domain' => $product->user->partner->domain,
+                'brand' => $product->user->partner->brand,
+            ];
+        }
 
         return response()->json([
             'product' => [
@@ -244,10 +259,7 @@ class ProductController extends Controller
                 'owner_name' => $product->owner_name,
                 'owner_email' => $product->owner_email,
                 'created_at' => $product->created_at,
-                'uploaded_by' => [
-                    'name' => $product->user->name,
-                    'email' => $product->user->email,
-                ],
+                'uploaded_by' => $uploadedBy,
             ],
         ]);
     }

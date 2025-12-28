@@ -303,7 +303,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Tạo tài khoản thành công',
-            'user' => $user->load('partner', 'creator'),
+            'user' => $user->load('partner:id,name', 'creator:id,name,email,role'),
         ], 201);
     }
 }
