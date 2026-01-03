@@ -10,7 +10,7 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 - ✅ User-Partner Relationship & Created-By Tracking
 - ✅ Product Management với NFC Tag Integration
 - ✅ Image Upload & Storage
-- ✅ Owner Transfer System (NFC)
+- ✅ Owner Update System (OTP via Email)
 
 ## 📋 Yêu cầu
 
@@ -271,12 +271,75 @@ Authorization: Bearer {access_token}
 # Xem thông tin sản phẩm qua NFC scan
 GET /api/nfc/{tag_id}
 
-# Đổi chủ sở hữu
+# Đổi chủ sở hữu (DEPRECATED)
+# Endpoint này đã ngừng hỗ trợ và sẽ trả về 410 Gone.
+# Vui lòng dùng flow OTP bên dưới (/api/owner/*).
 PUT /api/nfc/{tag_id}/owner
+```
+
+### Owner OTP Routes (Public - Không cần token)
+
+> MỌI thay đổi OWNER đều BẮT BUỘC xác thực OTP qua email.
+> - Send OTP KHÔNG update bảng `products`
+> - OTP dùng 1 lần, hết hạn sau 5 phút
+> - 1 email: tối đa 3 OTP / 10 phút (chống spam)
+
+#### 1) Gửi OTP
+
+```http
+POST /api/owner/send-otp
 Content-Type: application/json
+
 {
+    "product_id": 1,
+    "email": "owner@example.com",
+    "purpose": "update_owner"
+}
+```
+
+#### 2) Submit cập nhật OWNER (verify OTP rồi mới update)
+
+**CASE 1: Lần đầu update (owner_email = NULL)**
+
+```http
+PUT /api/owner/update
+Content-Type: application/json
+
+{
+    "product_id": 1,
+    "owner_name": "Tên chủ sở hữu",
+    "owner_email": "owner@example.com",
+    "otp_code": "123456"
+}
+```
+
+**CASE 2: Đã có owner email – không đổi email**
+
+```http
+PUT /api/owner/update
+Content-Type: application/json
+
+{
+    "product_id": 1,
     "owner_name": "Tên mới",
-    "owner_email": "email@example.com"
+    "owner_email": "current@example.com",
+    "otp_code": "123456"
+}
+```
+
+**CASE 3: Đổi owner email (cần OTP cho cả email cũ và mới)**
+
+```http
+PUT /api/owner/update
+Content-Type: application/json
+
+{
+    "product_id": 1,
+    "owner_name": "Tên mới",
+    "owner_email": "old@example.com",
+    "owner_email_new": "new@example.com",
+    "otp_code_old": "111111",
+    "otp_code_new": "222222"
 }
 ```
 
@@ -284,7 +347,7 @@ Content-Type: application/json
 
 1. **Upload sản phẩm** → Nhận `nfc_url` (VD: `http://domain.com/nfc/NFC-A7B2C9`)
 2. **Ghi URL vào chip NFC** → Khách scan để xem thông tin
-3. **Đổi chủ sở hữu** → PUT `/api/nfc/{tag_id}/owner`
+3. **Đổi chủ sở hữu** → Flow OTP qua `/api/owner/send-otp` + `/api/owner/update`
 
 **Tag ID:** Auto-generate dạng `NFC-XXXXXX`, unique, không thể sửa sau khi tạo.
 
@@ -297,21 +360,29 @@ app/
 │   ├── Controllers/
 │   │   ├── AuthController.php      # Auth & User Management
 │   │   ├── PartnerController.php   # Partner Management
-│   │   └── ProductController.php   # Product & NFC
+│   │   ├── ProductController.php   # Product & NFC
+│   │   └── OwnerController.php     # Owner update via OTP
 │   └── Middleware/
 │       ├── JWTAuthMiddleware.php
 │       └── CheckRole.php
+├── Mail/
+│   └── OwnerOtpMail.php
 └── Models/
     ├── User.php                    # với created_by tracking
     ├── Partner.php
-    └── Product.php
+    ├── Product.php
+    └── EmailOtp.php
+Services/
+└── EmailOtpService.php
 database/migrations/
 ├── create_users_table.php
 ├── create_partners_table.php       # name, domain, brand
 ├── create_products_table.php
 ├── add_role_to_users_table.php
 ├── add_partner_id_to_users_table.php
-└── add_created_by_to_users_table.php  # Tracking người tạo
+├── add_created_by_to_users_table.php  # Tracking người tạo
+├── add_owner_email_verified_at_to_products_table.php
+└── create_email_otps_table.php
 ```
 
 ## 🔒 Security

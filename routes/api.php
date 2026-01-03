@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\OwnerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,14 @@ Route::prefix('auth')->group(function () {
 Route::prefix('nfc')->group(function () {
     Route::get('/{tag_id}', [ProductController::class, 'getByTag']); // Xem thông tin qua NFC scan
     Route::put('/{tag_id}/owner', [ProductController::class, 'updateOwner']); // Đổi chủ sở hữu
+});
+
+// Owner OTP Routes - Public (không cần authentication)
+Route::prefix('owner')->group(function () {
+    Route::post('/send-otp', [OwnerController::class, 'sendOtp'])
+        ->middleware('throttle:6,1');
+    Route::put('/update', [OwnerController::class, 'update'])
+        ->middleware('throttle:10,1');
 });
 
 // ========================================

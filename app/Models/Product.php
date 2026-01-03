@@ -18,6 +18,7 @@ class Product extends Model
         'uploaded_by',
         'owner_name',
         'owner_email',
+        'owner_email_verified_at',
     ];
 
     /**
@@ -48,6 +49,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'owner_email_verified_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

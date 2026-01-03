@@ -273,36 +273,12 @@ class ProductController extends Controller
      */
     public function updateOwner(Request $request, $tagId)
     {
-        $product = Product::where('tag_id', $tagId)->firstOrFail();
-
-        $validator = Validator::make($request->all(), [
-            'owner_name' => 'required|string|max:255',
-            'owner_email' => 'required|email|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        try {
-            $product->update([
-                'owner_name' => $request->owner_name,
-                'owner_email' => $request->owner_email,
-            ]);
-
-            return response()->json([
-                'message' => 'Cập nhật thông tin chủ sở hữu thành công',
-                'product' => [
-                    'tag_id' => $product->tag_id,
-                    'owner_name' => $product->owner_name,
-                    'owner_email' => $product->owner_email,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Có lỗi xảy ra khi cập nhật',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Endpoint này đã ngừng hỗ trợ. Mọi thay đổi OWNER bắt buộc xác thực OTP.',
+            'hint' => [
+                'send_otp' => 'POST /api/owner/send-otp',
+                'update' => 'PUT /api/owner/update',
+            ],
+        ], 410);
     }
 }
