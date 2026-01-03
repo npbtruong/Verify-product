@@ -71,41 +71,11 @@ JWT_REFRESH_TTL=604800
 | **User** | ❌ Không | ❌ Không | ❌ Không |
 
 **Lưu ý:**
-- Đăng ký công khai (`POST /api/auth/register`) chỉ tạo user với role `user`
 - Admin và Partner phải sử dụng endpoint `POST /api/auth/create-user` để tạo user mới
 
 ---
 
 ### Public Routes (Không cần token)
-
-#### Register
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-    "name": "Test User",
-    "email": "test@example.com",
-    "password": "123456",
-    "password_confirmation": "123456"
-}
-
-Response:
-{
-    "message": "Đăng ký thành công",
-    "user": {
-        "id": 1,
-        "name": "Test User",
-        "email": "test@example.com",
-        "role": "user"  // Luôn là 'user' khi đăng ký công khai
-    },
-    "access_token": "...",
-    "refresh_token": "...",
-    "token_type": "Bearer"
-}
-
-Note: Đăng ký công khai chỉ tạo user với role 'user'
-```
 
 #### Login
 ```http

@@ -11,44 +11,6 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
     /**
-     * Register new user
-     */
-    public function register(Request $request)
-    {
-        //tạm chưa sai api này
-        return response()->json(['message' => 'Đăng ký tạm thời không khả dụng'], 503);
-        
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        // Đăng ký công khai chỉ tạo user với role 'user'
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'user', // Mặc định là user
-        ]);
-
-        $token = JWTHelper::generateToken($user->id);
-        $refreshToken = JWTHelper::generateRefreshToken($user->id);
-
-        return response()->json([
-            'message' => 'Đăng ký thành công',
-            'user' => $user,
-            'access_token' => $token,
-            'refresh_token' => $refreshToken,
-            'token_type' => 'Bearer',
-        ], 201);
-    }
-
-    /**
      * Login user
      */
     public function login(Request $request)
