@@ -20,7 +20,7 @@ class OwnerController extends Controller
      */
     public function sendOtp(SendOwnerOtpRequest $request)
     {
-        $product = Product::findOrFail($request->integer('product_id'));
+        $product = Product::where('tag_id', (string) $request->input('tag_id'))->firstOrFail();
 
         $result = $this->emailOtpService->sendUpdateOwnerOtp(
             product: $product,
@@ -39,10 +39,9 @@ class OwnerController extends Controller
      */
     public function update(UpdateOwnerRequest $request)
     {
-        $productId = $request->integer('product_id');
         $ownerName = (string) $request->input('owner_name');
 
-        $product = Product::findOrFail($productId);
+        $product = Product::where('tag_id', (string) $request->input('tag_id'))->firstOrFail();
 
         $isChangeEmail = $request->filled('owner_email_new');
 

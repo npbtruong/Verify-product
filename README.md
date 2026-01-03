@@ -291,7 +291,7 @@ POST /api/owner/send-otp
 Content-Type: application/json
 
 {
-    "product_id": 1,
+    "tag_id": "NFC-ABC123",
     "email": "owner@example.com",
     "purpose": "update_owner"
 }
@@ -306,7 +306,7 @@ PUT /api/owner/update
 Content-Type: application/json
 
 {
-    "product_id": 1,
+    "tag_id": "NFC-ABC123",
     "owner_name": "Tên chủ sở hữu",
     "owner_email": "owner@example.com",
     "otp_code": "123456"
@@ -320,7 +320,7 @@ PUT /api/owner/update
 Content-Type: application/json
 
 {
-    "product_id": 1,
+    "tag_id": "NFC-ABC123",
     "owner_name": "Tên mới",
     "owner_email": "current@example.com",
     "otp_code": "123456"
@@ -334,7 +334,7 @@ PUT /api/owner/update
 Content-Type: application/json
 
 {
-    "product_id": 1,
+    "tag_id": "NFC-ABC123",
     "owner_name": "Tên mới",
     "owner_email": "old@example.com",
     "owner_email_new": "new@example.com",

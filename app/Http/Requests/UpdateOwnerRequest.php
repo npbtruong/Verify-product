@@ -16,6 +16,7 @@ class UpdateOwnerRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'tag_id' => is_string($this->tag_id) ? trim($this->tag_id) : $this->tag_id,
             'owner_email' => is_string($this->owner_email) ? mb_strtolower(trim($this->owner_email)) : $this->owner_email,
             'owner_email_new' => is_string($this->owner_email_new) ? mb_strtolower(trim($this->owner_email_new)) : $this->owner_email_new,
         ]);
@@ -26,7 +27,7 @@ class UpdateOwnerRequest extends FormRequest
         $isChangeEmail = $this->filled('owner_email_new');
 
         $rules = [
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'tag_id' => ['required', 'string', 'max:255', 'exists:products,tag_id'],
             'owner_name' => ['required', 'string', 'max:255'],
         ];
 
@@ -51,7 +52,7 @@ class UpdateOwnerRequest extends FormRequest
             }
 
             /** @var Product|null $product */
-            $product = Product::find($this->input('product_id'));
+            $product = Product::where('tag_id', $this->input('tag_id'))->first();
             if (!$product) {
                 return;
             }

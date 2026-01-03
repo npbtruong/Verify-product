@@ -15,6 +15,7 @@ class SendOwnerOtpRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'tag_id' => is_string($this->tag_id) ? trim($this->tag_id) : $this->tag_id,
             'email' => is_string($this->email) ? mb_strtolower(trim($this->email)) : $this->email,
             'purpose' => is_string($this->purpose) ? trim($this->purpose) : $this->purpose,
         ]);
@@ -23,7 +24,7 @@ class SendOwnerOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'tag_id' => ['required', 'string', 'max:255', 'exists:products,tag_id'],
             'email' => ['required', 'email', 'max:255'],
             'purpose' => ['required', 'in:' . EmailOtp::PURPOSE_UPDATE_OWNER],
         ];

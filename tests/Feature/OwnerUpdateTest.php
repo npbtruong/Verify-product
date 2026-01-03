@@ -58,7 +58,7 @@ class OwnerUpdateTest extends TestCase
         $otp = $this->seedOtp($product->id, $email, $code);
 
         $response = $this->putJson('/api/owner/update', [
-            'product_id' => $product->id,
+            'tag_id' => $product->tag_id,
             'owner_name' => 'New Owner',
             'owner_email' => $email,
             'otp_code' => $code,
@@ -88,7 +88,7 @@ class OwnerUpdateTest extends TestCase
         $otp = $this->seedOtp($product->id, 'current@example.com', $code);
 
         $response = $this->putJson('/api/owner/update', [
-            'product_id' => $product->id,
+            'tag_id' => $product->tag_id,
             'owner_name' => 'Updated Name',
             'owner_email' => 'current@example.com',
             'otp_code' => $code,
@@ -117,7 +117,7 @@ class OwnerUpdateTest extends TestCase
         $otpNew = $this->seedOtp($product->id, 'new@example.com', '333333');
 
         $response = $this->putJson('/api/owner/update', [
-            'product_id' => $product->id,
+            'tag_id' => $product->tag_id,
             'owner_name' => 'New Name',
             'owner_email' => 'old@example.com',
             'owner_email_new' => 'new@example.com',
@@ -152,7 +152,7 @@ class OwnerUpdateTest extends TestCase
         ]);
 
         $response = $this->putJson('/api/owner/update', [
-            'product_id' => $product->id,
+            'tag_id' => $product->tag_id,
             'owner_name' => 'Name',
             'owner_email' => $email,
             'otp_code' => '444444',
@@ -174,7 +174,7 @@ class OwnerUpdateTest extends TestCase
 
         for ($i = 1; $i <= 5; $i++) {
             $response = $this->putJson('/api/owner/update', [
-                'product_id' => $product->id,
+                'tag_id' => $product->tag_id,
                 'owner_name' => 'Name',
                 'owner_email' => $email,
                 'otp_code' => '000000',
@@ -188,7 +188,7 @@ class OwnerUpdateTest extends TestCase
 
         // 6th attempt should be blocked by attempt limit
         $response = $this->putJson('/api/owner/update', [
-            'product_id' => $product->id,
+            'tag_id' => $product->tag_id,
             'owner_name' => 'Name',
             'owner_email' => $email,
             'otp_code' => '000000',
