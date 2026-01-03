@@ -264,21 +264,4 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Update owner information (Public - for NFC scan only)
-     * URL: PUT /api/nfc/{tag_id}/owner
-     * 
-     * Chỉ cho phép update owner_name và owner_email
-     * Không cho phép sửa ảnh, tag_id, describe
-     */
-    public function updateOwner(Request $request, $tagId)
-    {
-        return response()->json([
-            'message' => 'Endpoint này đã ngừng hỗ trợ. Mọi thay đổi OWNER bắt buộc xác thực OTP.',
-            'hint' => [
-                'send_otp' => 'POST /api/owner/send-otp',
-                'update' => 'PUT /api/owner/update',
-            ],
-        ], 410);
-    }
 }

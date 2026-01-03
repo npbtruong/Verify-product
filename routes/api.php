@@ -27,7 +27,6 @@ Route::prefix('auth')->group(function () {
 // NFC Routes - Public (không cần authentication)
 Route::prefix('nfc')->group(function () {
     Route::get('/{tag_id}', [ProductController::class, 'getByTag']); // Xem thông tin qua NFC scan
-    Route::put('/{tag_id}/owner', [ProductController::class, 'updateOwner']); // Đổi chủ sở hữu
 });
 
 // Owner OTP Routes - Public (không cần authentication)
