@@ -12,7 +12,7 @@ use App\Http\Controllers\OwnerController;
 // ========================================
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/refresh', [AuthController::class, 'refreshToken']);
+    Route::post('/refresh', [AuthController::class, 'refreshToken']); // No Longer Used
 });
 
 // NFC Routes - Public (không cần authentication)
