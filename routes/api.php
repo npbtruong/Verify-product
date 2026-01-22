@@ -7,26 +7,13 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\OwnerController;
 
-// ========================================
-// PUBLIC ROUTES - Không cần authentication
-// ========================================
+
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/refresh', [AuthController::class, 'refreshToken']); // No Longer Used
 });
 
-// NFC Routes - Public (không cần authentication)
-Route::prefix('nfc')->group(function () {
-    Route::get('/{tag_id}', [ProductController::class, 'getByTag']); // Xem thông tin qua NFC scan
-});
 
-// Owner OTP Routes - Public (không cần authentication)
-Route::prefix('owner')->group(function () {
-    Route::post('/send-otp', [OwnerController::class, 'sendOtp'])
-        ->middleware('throttle:6,1');
-    Route::put('/update', [OwnerController::class, 'update'])
-        ->middleware('throttle:10,1');
-});
 
 // ========================================
 // PROTECTED ROUTES - Cần JWT authentication
@@ -68,4 +55,21 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::delete('/{id}', [ProductController::class, 'destroy']); // Xóa sản phẩm
     });
 });
+// ========================================
+// END
+// ========================================
 
+
+
+// NFC Routes - Public (không cần authentication)
+Route::prefix('nfc')->group(function () {
+    Route::get('/{tag_id}', [ProductController::class, 'getByTag']); // Xem thông tin qua NFC scan
+});
+
+// Owner OTP Routes - Public (không cần authentication)
+Route::prefix('owner')->group(function () {
+    Route::post('/send-otp', [OwnerController::class, 'sendOtp'])
+        ->middleware('throttle:6,1');
+    Route::put('/update', [OwnerController::class, 'update'])
+        ->middleware('throttle:10,1');
+});
