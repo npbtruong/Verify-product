@@ -27,11 +27,6 @@ class ProductController extends Controller
             $query->where('uploaded_by', $request->user_id);
         }
 
-        // Search by tag_id
-        if ($request->has('tag_id')) {
-            $query->where('tag_id', 'LIKE', '%' . $request->tag_id . '%');
-        }
-
         $products = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return response()->json($products);
@@ -210,7 +205,7 @@ class ProductController extends Controller
     public function statistics(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         $stats = [
             'total_products' => Product::where('uploaded_by', $userId)->count(),
             'recent_products' => Product::where('uploaded_by', $userId)
