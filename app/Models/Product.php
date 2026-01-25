@@ -50,7 +50,7 @@ class Product extends Model
     {
         return [
             'owner_email_verified_at' => 'datetime',
-            'created_at' => 'datetime',
+            'created_at' => 'datetime:m/d/Y h:i A',
             'updated_at' => 'datetime',
         ];
     }
