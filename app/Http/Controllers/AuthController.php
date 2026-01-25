@@ -43,36 +43,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Refresh access token
-     */
-    public function refreshToken(Request $request)
-    {
-        $refreshToken = $request->input('refresh_token');
-
-        if (!$refreshToken) {
-            return response()->json(['message' => 'Refresh token không được cung cấp'], 400);
-        }
-
-        try {
-            $decoded = JWTHelper::verifyToken($refreshToken);
-
-            if (($decoded->type ?? null) !== 'refresh') {
-                return response()->json(['message' => 'Token không hợp lệ'], 401);
-            }
-
-            $userId = $decoded->sub;
-            $newToken = JWTHelper::generateToken($userId);
-
-            return response()->json([
-                'access_token' => $newToken,
-                'token_type' => 'Bearer',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 401);
-        }
-    }
-
-    /**
      * Get authenticated user profile
      */
     public function profile(Request $request)
@@ -108,15 +78,15 @@ class AuthController extends Controller
 
         // Chỉ cho phép update những field được phép
         $allowedFields = ['name', 'email'];
-        
+
         // Admin và Partner có thể đổi partner_id của chính họ
         if (in_array($user->role, ['admin', 'partner']) && $request->has('partner_id')) {
             $allowedFields[] = 'partner_id';
-            
+
             // Nếu admin/partner đổi partner_id, cập nhật tất cả user do họ tạo
             $oldPartnerId = $user->partner_id;
             $newPartnerId = $request->partner_id;
-            
+
             if ($oldPartnerId !== $newPartnerId) {
                 // Cập nhật partner_id cho tất cả user được tạo bởi user này
                 User::where('created_by', $user->id)
@@ -245,7 +215,7 @@ class AuthController extends Controller
         // - USER: TỰ ĐỘNG lấy từ người tạo (KHÔNG cho phép manual set)
         // - PARTNER/ADMIN: Cho phép manual set qua request, không thì null
         $partnerIdToAssign = null;
-        
+
         if ($requestedRole === 'user') {
             // User TỰ ĐỘNG kế thừa partner_id từ người tạo
             $partnerIdToAssign = $currentUser->partner_id;
@@ -267,5 +237,38 @@ class AuthController extends Controller
             'message' => 'Tạo tài khoản thành công',
             'user' => $user->load('partner:id,name', 'creator:id,name,email,role'),
         ], 201);
+    }
+
+
+
+    /**
+     * No Longer Used
+     * Refresh access token
+     */
+    public function refreshToken(Request $request)
+    {
+        $refreshToken = $request->input('refresh_token');
+
+        if (!$refreshToken) {
+            return response()->json(['message' => 'Refresh token không được cung cấp'], 400);
+        }
+
+        try {
+            $decoded = JWTHelper::verifyToken($refreshToken);
+
+            if (($decoded->type ?? null) !== 'refresh') {
+                return response()->json(['message' => 'Token không hợp lệ'], 401);
+            }
+
+            $userId = $decoded->sub;
+            $newToken = JWTHelper::generateToken($userId);
+
+            return response()->json([
+                'access_token' => $newToken,
+                'token_type' => 'Bearer',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 401);
+        }
     }
 }

@@ -17,7 +17,7 @@ class ProductController extends Controller
     {
         $query = Product::with('user:id,name,email');
 
-        $products = $query->orderBy('created_at', 'desc')->paginate(4);
+        $products = $query->orderBy('created_at', 'desc')->paginate(5);
 
         return response()->json($products);
     }
@@ -195,7 +195,7 @@ class ProductController extends Controller
     public function statistics(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         $stats = [
             'total_products' => Product::where('uploaded_by', $userId)->count(),
             'recent_products' => Product::where('uploaded_by', $userId)
