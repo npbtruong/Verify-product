@@ -17,7 +17,7 @@ class ProductController extends Controller
     {
         $query = Product::with('user:id,name,email');
 
-        $products = $query->orderBy('created_at', 'desc')->paginate(5);
+        $products = $query->orderBy('created_at', 'desc')->paginate(6);
 
         return response()->json($products);
     }
