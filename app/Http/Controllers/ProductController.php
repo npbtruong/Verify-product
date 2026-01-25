@@ -17,22 +17,7 @@ class ProductController extends Controller
     {
         $query = Product::with('user:id,name,email');
 
-        // Filter by current user if requested
-        if ($request->has('my_products')) {
-            $query->where('uploaded_by', $request->user()->id);
-        }
-
-        // Filter by specific user_id (admin feature)
-        if ($request->has('user_id')) {
-            $query->where('uploaded_by', $request->user_id);
-        }
-
-        // Search by tag_id
-        if ($request->has('tag_id')) {
-            $query->where('tag_id', 'LIKE', '%' . $request->tag_id . '%');
-        }
-
-        $products = $query->orderBy('created_at', 'desc')->paginate(20);
+        $products = $query->orderBy('created_at', 'desc')->paginate(4);
 
         return response()->json($products);
     }
