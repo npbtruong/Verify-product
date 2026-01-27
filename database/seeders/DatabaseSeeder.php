@@ -22,12 +22,16 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
+            'role' => 'admin',
         ]);
 
         // Create test user
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+            'role' => 'user',
         ]);
         //php artisan migrate:fresh --seed
         //Email: admin@example.com

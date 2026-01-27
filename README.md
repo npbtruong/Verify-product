@@ -20,7 +20,7 @@ Backend API cho ứng dụng mobile sử dụng Laravel 11 và JWT Authenticatio
 - Firebase JWT Library
 
 ## 🔧 Cài đặt
-
+( chạy lại migration + seed nếu đã có dữ liệu cũ :php artisan migrate:fresh --seed)
 ```bash
 # Clone repository
 git clone https://github.com/npbtruong/be_mobile.git
