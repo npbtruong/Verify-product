@@ -25,9 +25,9 @@ class ProductController extends Controller
     /**
      * Get single product by ID
      */
-    public function show($id)
+    public function show($tagId)
     {
-        $product = Product::with('user:id,name,email')->findOrFail($id);
+        $product = Product::with('user:id,name,email')->where('tag_id', $tagId)->firstOrFail();
 
         return response()->json($product);
     }
@@ -84,6 +84,38 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Mark product as NFC written
+     * URL: PUT /api/products/{id}/nfc-written
+     */
+    public function markNfcWritten(Request $request, $tagId)
+    {
+        $product = Product::where('tag_id', $tagId)->firstOrFail();
+
+        // Check authorization - only owner can mark as written
+        if ($product->uploaded_by !== $request->user()->id) {
+            return response()->json(['message' => 'Bạn không có quyền cập nhật sản phẩm này'], 403);
+        }
+
+        try {
+            $product->update([
+                'nfc_written' => 1,
+                'nfc_written_at' => now(),
+            ]);
+
+            return response()->json([
+                'message' => 'NFC đã được đánh dấu là đã ghi thành công',
+                'product' => $product->load('user:id,name,email'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi cập nhật',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     /**
      * Update product

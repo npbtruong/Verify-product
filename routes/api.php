@@ -49,8 +49,9 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']); // Lấy danh sách sản phẩm
         Route::post('/', [ProductController::class, 'store']); // Upload sản phẩm
+        Route::put('/{tag_id}/nfc-written', [ProductController::class, 'markNfcWritten']); // Đánh dấu NFC đã ghi
         Route::get('/statistics', [ProductController::class, 'statistics']); // Thống kê
-        Route::get('/{id}', [ProductController::class, 'show']); // Chi tiết sản phẩm
+        Route::get('/{tag_id}', [ProductController::class, 'show']); // Chi tiết sản phẩm
         Route::post('/{id}', [ProductController::class, 'update']); // Cập nhật sản phẩm (dùng POST vì có upload file)
         Route::delete('/{id}', [ProductController::class, 'destroy']); // Xóa sản phẩm
     });

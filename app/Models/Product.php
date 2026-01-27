@@ -19,6 +19,8 @@ class Product extends Model
         'owner_name',
         'owner_email',
         'owner_email_verified_at',
+        'nfc_written',
+        'nfc_written_at',
     ];
 
     /**
