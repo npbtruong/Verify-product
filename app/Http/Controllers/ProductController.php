@@ -29,8 +29,6 @@ class ProductController extends Controller
     {
         $product = Product::with('user:id,name,email')->where('tag_id', $tagId)->firstOrFail();
 
-        $product->nfc_url =  env('NFC_URL') . '/api/nfc/' . $product->tag_id;
-
         return response()->json($product);
     }
 
@@ -70,13 +68,9 @@ class ProductController extends Controller
                 'owner_email' => $request->owner_email,
             ]);
 
-            // Generate NFC URL
-            $nfcUrl =  env('NFC_URL') . '/api/nfc/' . $product->tag_id;
-
             return response()->json([
                 'message' => 'Sản phẩm đã được tạo thành công',
-                'product' => $product->load('user:id,name,email'),
-                'nfc_url' => $nfcUrl,
+                'product' => $product->load('user:id,name,email'),   
                 'nfc_instructions' => 'Ghi URL này vào thẻ NFC để khách hàng có thể scan',
             ], 201);
         } catch (\Exception $e) {
