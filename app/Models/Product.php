@@ -23,6 +23,16 @@ class Product extends Model
         'nfc_written_at',
     ];
 
+    protected $appends = ['nfc_url'];
+
+    /**
+     * Get the NFC URL for the product.
+     */
+    public function getNfcUrlAttribute(): string
+    {
+        return env('NFC_URL') . '/api/nfc/' . $this->tag_id;
+    }
+
     /**
      * Generate unique tag ID
      * Format: NFC-XXXXXX (NFC + 6 ký tự ngẫu nhiên uppercase)
